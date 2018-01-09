@@ -14,6 +14,10 @@ import {
   createEventMetaCreator
 } from '../../redux';
 
+import {
+  types as challenges
+} from '../../routes/Challenges/redux';
+
 export const epics = [];
 
 export const types = createTypes([
@@ -105,6 +109,30 @@ export default handleActions(
       return {
         ...state,
         mapUi: utils.createMapUi(entities, result)
+      };
+    },
+    [challenges.challengeUpdated]: (state, { meta }) => {
+      const { challenge: { superOrder, order } } = meta.map;
+
+      /*
+      * Using order to find nodes because of inconsistency in node names:
+      * - challenge.superBlock keeps title
+      * - challenge.block keeps dashed name
+      * - Node.name keeps dashed name
+      * */
+
+      /*
+      * superOrder and order numbers are stored differently,
+      * so we have to change them to pass nodes indexes to method
+      * */
+      const nodesToOpen = [
+        superOrder - 1,
+        order
+      ];
+
+      return {
+        ...state,
+        mapUi: utils.openPathByOrder(state.mapUi, nodesToOpen)
       };
     }
   }),

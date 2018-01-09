@@ -43,6 +43,8 @@ export projectNormalizer from '../views/project/redux';
 const challengeToFilesMetaCreator =
   _.flow(challengeToFiles, createFilesMetaCreator);
 
+const challengeUpdatedMapMetaCreator = challenge => ({map: { challenge }});
+
 export const epics = [
   modalEpic,
   challengeEpic,
@@ -132,7 +134,10 @@ export const updateSuccessMessage = createAction(types.updateSuccessMessage);
 export const challengeUpdated = createAction(
   types.challengeUpdated,
   challenge => ({ challenge }),
-  challengeToFilesMetaCreator
+  challenge => ({
+    ...challengeToFilesMetaCreator(challenge),
+    ...challengeUpdatedMapMetaCreator(challenge)
+  })
 );
 export const clickOnReset = createAction(types.clickOnReset);
 

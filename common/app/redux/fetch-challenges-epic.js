@@ -9,12 +9,17 @@ import {
   delayedRedirect,
 
   fetchChallengeCompleted,
-  fetchChallengesCompleted
+  fetchChallengesCompleted,
+
+  challengeSelector
 } from './';
 import { isChallengeLoaded } from '../entities/index.js';
 
 import { shapeChallenges } from './utils';
-import { types as challenge } from '../routes/Challenges/redux';
+import {
+  challengeUpdated,
+  types as challenge
+} from '../routes/Challenges/redux';
 import { langSelector } from '../Router/redux';
 
 const isDev = debug.enabled('fcc:*');
@@ -70,12 +75,10 @@ export function fetchChallengesEpic(
           ),
           ...res
         }))
-        .map(({ entities, result } = {}) => {
-          return fetchChallengesCompleted(
-            entities,
-            result
-          );
-        })
+        .flatMap(({ entities, result } = {}) => Observable.of(
+          fetchChallengesCompleted(entities, result),
+          challengeUpdated(challengeSelector(getState()))
+        ))
         .startWith({ type: types.fetchChallenges.start })
         .catch(createErrorObservable);
     });
