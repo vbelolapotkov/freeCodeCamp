@@ -8,7 +8,8 @@ import {
   updateSingleNode,
   toggleThisPanel,
   expandAllPanels,
-  collapseAllPanels
+  collapseAllPanels,
+  openPathByOrder
 } from './utils.js';
 
 test('createMapUi', t => {
@@ -211,5 +212,61 @@ test('toggleAllPanels', t => {
     t.plan(2);
     t.deepLooseEqual(actual, expected);
     t.equal(actual.children[0].children[1], leaf);
+  });
+});
+test('openPathByOrder', t => {
+  t.test('should open single node', t => {
+    const expected = {
+      children: [
+        {
+          name: 'superFoo',
+          isOpen: true,
+          children: [
+            {
+              name: 'blockBar',
+              isOpen: false,
+              children: []
+            },
+            {
+              name: 'blockFoo',
+              isOpen: true
+            }
+          ]
+        },
+        {
+          name: 'superBar',
+          isOpen: false,
+          children: []
+        }
+      ]
+    };
+
+    const actual = openPathByOrder({
+      children: [
+        {
+          name: 'superFoo',
+          isOpen: false,
+          children: [
+            {
+              name: 'blockBar',
+              isOpen: false,
+              children: []
+            },
+            {
+              name: 'blockFoo',
+              isOpen: false
+            }
+          ]
+        },
+        {
+          name: 'superBar',
+          isOpen: false,
+          children: []
+        }
+      ]
+    }, [ 0, 1 ]);
+
+    t.plan(1);
+    t.deepLooseEqual(actual, expected);
   });
 });

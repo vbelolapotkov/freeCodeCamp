@@ -157,3 +157,31 @@ export function collapseAllPanels(tree) {
 export function expandAllPanels(tree) {
   return toggleAllPanels(tree, true);
 }
+
+// openNodes(tree: MapUi, pathOrders: [Number]) => MapUi
+export function openPathByOrder(tree, pathOrders = []) {
+  const update = node => ({
+    ...node,
+    isOpen: true
+  });
+
+  if (pathOrders.length === 0 || !tree.children) {
+    return tree;
+  }
+
+  const [order, ...restOrders] = pathOrders;
+  if ( order < 0 || order >= tree.children.length ) {
+    return tree;
+  }
+
+  const node = tree.children[order];
+
+  return {
+      ...tree,
+      children: [
+        ...tree.children.slice(0, order),
+        update(openPathByOrder(node, restOrders)),
+        ...tree.children.slice(order + 1)
+      ]
+    };
+}
