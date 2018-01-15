@@ -9,7 +9,8 @@ import {
   toggleThisPanel,
   expandAllPanels,
   collapseAllPanels,
-  openPathByOrder
+  updatePath,
+  openPath
 } from './utils.js';
 
 test('createMapUi', t => {
@@ -214,8 +215,48 @@ test('toggleAllPanels', t => {
     t.equal(actual.children[0].children[1], leaf);
   });
 });
-test('openPathByOrder', t => {
-  t.test('should open single node', t => {
+test('updatePath', t => {
+  t.test('should call update function for each node in the path', t => {
+    const expected = {
+      children: [
+        {
+          name: 'superFoo',
+          children: [
+            {
+              name: 'blockBar',
+              children: [{name: 'challBar'}]
+            },
+            {
+              name: 'blockFoo',
+              children: [{name: 'challFoo'}]
+            }
+          ]
+        },
+        {
+          name: 'superBaz',
+          isOpen: false,
+          children: []
+        }
+      ]
+    };
+
+    const spy = sinon.spy(t => ({ ...t}) );
+    spy.withArgs(expected.children[0]);
+    spy.withArgs(expected.children[0].children[1]);
+    spy.withArgs(expected.children[0].children[1].children[0]);
+    updatePath(expected, 'challFoo', spy);
+    t.plan(4);
+    t.equal(spy.callCount, 3);
+    t.ok(spy.withArgs(expected.children[0]).calledOnce, 'superBlock');
+    t.ok(spy.withArgs(expected.children[0].children[1]).calledOnce, 'block');
+    t.ok(
+      spy.withArgs(expected.children[0].children[1].children[0]).calledOnce,
+      'chall'
+    );
+  });
+});
+test('openPath', t=> {
+  t.test('should open all nodes in the path', t => {
     const expected = {
       children: [
         {
@@ -229,7 +270,10 @@ test('openPathByOrder', t => {
             },
             {
               name: 'blockFoo',
-              isOpen: true
+              isOpen: true,
+              children: [{
+                name: 'challFoo'
+              }]
             }
           ]
         },
@@ -241,7 +285,7 @@ test('openPathByOrder', t => {
       ]
     };
 
-    const actual = openPathByOrder({
+    const actual = openPath({
       children: [
         {
           name: 'superFoo',
@@ -254,7 +298,10 @@ test('openPathByOrder', t => {
             },
             {
               name: 'blockFoo',
-              isOpen: false
+              isOpen: false,
+              children: [{
+                name: 'challFoo'
+              }]
             }
           ]
         },
@@ -264,7 +311,7 @@ test('openPathByOrder', t => {
           children: []
         }
       ]
-    }, [ 0, 1 ]);
+    }, 'challFoo');
 
     t.plan(1);
     t.deepLooseEqual(actual, expected);

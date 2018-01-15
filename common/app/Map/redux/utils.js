@@ -158,30 +158,74 @@ export function expandAllPanels(tree) {
   return toggleAllPanels(tree, true);
 }
 
-// openNodes(tree: MapUi, pathOrders: [Number]) => MapUi
-export function openPathByOrder(tree, pathOrders = []) {
-  const update = node => ({
-    ...node,
-    isOpen: true
-  });
+// synchronise
+// updatePath(
+//   tree: MapUi,
+//   name: String,
+//   update(MapUi|Node) => MapUi|Node
+// ) => MapUi
+export function updatePath(tree, name, pathUpdater) {
+  const path = [];
+  let pathFound = false;
 
-  if (pathOrders.length === 0 || !tree.children) {
+  const isInPath = node => !!path.find(name => name === node.name);
+
+  const traverseMap = (tree, update) => {
+    if (pathFound) {
+      return isInPath(tree) ? update(tree) : tree;
+    }
+
+    if (tree.name === name) {
+      pathFound = true;
+      return update(tree);
+    }
+
+    let childrenChanged;
+
+    if (!Array.isArray(tree.children)) {
+      return tree;
+    }
+
+    if (tree.name) {
+      path.push(tree.name);
+    }
+
+    const newChildren = tree.children.map(node => {
+      const newNode = traverseMap(node, update);
+      if (!childrenChanged && newNode !== node) {
+        childrenChanged = true;
+      }
+      return newNode;
+    });
+    if (childrenChanged) {
+      tree = {
+        ...tree,
+        children: newChildren
+      };
+    }
+
+    if (pathFound && isInPath(tree)) {
+      return update(tree);
+    }
+
+    path.pop();
     return tree;
-  }
+  };
 
-  const [order, ...restOrders] = pathOrders;
-  if ( order < 0 || order >= tree.children.length ) {
-    return tree;
-  }
 
-  const node = tree.children[order];
-
-  return {
-      ...tree,
-      children: [
-        ...tree.children.slice(0, order),
-        update(openPathByOrder(node, restOrders)),
-        ...tree.children.slice(order + 1)
-      ]
-    };
+  return traverseMap(tree, pathUpdater);
 }
+
+// synchronise
+// openPath(tree: MapUi, name: String) => MapUi
+export function openPath(tree, name) {
+  return updatePath(tree, name, node => {
+    if (!Array.isArray(node.children)) {
+      return node;
+    }
+
+    return { ...node, isOpen: true };
+  });
+}
+
+

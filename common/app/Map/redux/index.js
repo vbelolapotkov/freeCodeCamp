@@ -1,4 +1,5 @@
 import {
+  composeReducers,
   createAction,
   createTypes,
   handleActions
@@ -13,10 +14,6 @@ import {
   types as app,
   createEventMetaCreator
 } from '../../redux';
-
-import {
-  types as challenges
-} from '../../routes/Challenges/redux';
 
 export const epics = [];
 
@@ -80,62 +77,51 @@ export function makePanelOpenSelector(name) {
 //     }]
 //   }
 // }
-export default handleActions(
-  ()=> ({
-    [types.toggleThisPanel]: (state, { payload: name }) => {
+export default composeReducers(
+  ns,
+  handleActions(
+    ()=> ({
+      [types.toggleThisPanel]: (state, { payload: name }) => {
+        return {
+          ...state,
+          mapUi: utils.toggleThisPanel(state.mapUi, name)
+        };
+      },
+      [types.collapseAll]: state => {
+        const mapUi = utils.collapseAllPanels(state.mapUi);
+        mapUi.isAllCollapsed = true;
+        return {
+          ...state,
+          mapUi
+        };
+      },
+      [types.expandAll]: state => {
+        const mapUi = utils.expandAllPanels(state.mapUi);
+        mapUi.isAllCollapsed = false;
+        return {
+          ...state,
+          mapUi
+        };
+      },
+      [app.fetchChallenges.complete]: (state, { payload }) => {
+        const { entities, result } = payload;
+        return {
+          ...state,
+          mapUi: utils.createMapUi(entities, result)
+        };
+      }
+    }),
+    initialState
+  ),
+  function metaReducer( state = initialState, action) {
+    if (action.meta && action.meta.map) {
+      const nodeName = action.meta.map.nodeName;
       return {
         ...state,
-        mapUi: utils.toggleThisPanel(state.mapUi, name)
-      };
-    },
-    [types.collapseAll]: state => {
-      const mapUi = utils.collapseAllPanels(state.mapUi);
-      mapUi.isAllCollapsed = true;
-      return {
-        ...state,
-        mapUi
-      };
-    },
-    [types.expandAll]: state => {
-      const mapUi = utils.expandAllPanels(state.mapUi);
-      mapUi.isAllCollapsed = false;
-      return {
-        ...state,
-        mapUi
-      };
-    },
-    [app.fetchChallenges.complete]: (state, { payload }) => {
-      const { entities, result } = payload;
-      return {
-        ...state,
-        mapUi: utils.createMapUi(entities, result)
-      };
-    },
-    [challenges.challengeUpdated]: (state, { meta }) => {
-      const { challenge: { superOrder, order } } = meta.map;
-
-      /*
-      * Using order to find nodes because of inconsistency in node names:
-      * - challenge.superBlock keeps title
-      * - challenge.block keeps dashed name
-      * - Node.name keeps dashed name
-      * */
-
-      /*
-      * superOrder and order numbers are stored differently,
-      * so we have to change them to pass nodes indexes to method
-      * */
-      const nodesToOpen = [
-        superOrder - 1,
-        order
-      ];
-
-      return {
-        ...state,
-        mapUi: utils.openPathByOrder(state.mapUi, nodesToOpen)
+        mapUi: utils.openPath(state.mapUi, nodeName)
       };
     }
-  }),
-  initialState,
-  ns
+    return state;
+  }
 );
+

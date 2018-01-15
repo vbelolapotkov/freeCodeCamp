@@ -43,7 +43,9 @@ export projectNormalizer from '../views/project/redux';
 const challengeToFilesMetaCreator =
   _.flow(challengeToFiles, createFilesMetaCreator);
 
-const challengeUpdatedMapMetaCreator = challenge => ({map: { challenge }});
+const challengeUpdatedMapMetaCreator = challenge => ({
+  map: { nodeName: challenge.dashedName }
+});
 
 export const epics = [
   modalEpic,
